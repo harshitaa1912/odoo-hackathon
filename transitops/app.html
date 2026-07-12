@@ -18,28 +18,28 @@
     <div class="sidebar-brand">TransitOps</div>
     <nav class="sidebar-nav">
       <div class="nav-item active" data-page="dashboard" id="nav-dashboard">
-        <span class="nav-icon">📊</span><span>Dashboard</span>
+        <span>Dashboard</span>
       </div>
       <div class="nav-item" data-page="fleet" id="nav-fleet">
-        <span class="nav-icon">🚛</span><span>Fleet</span>
+        <span>Fleet</span>
       </div>
       <div class="nav-item" data-page="drivers" id="nav-drivers">
-        <span class="nav-icon">👤</span><span>Drivers</span>
+        <span>Drivers</span>
       </div>
       <div class="nav-item" data-page="trips" id="nav-trips">
-        <span class="nav-icon">🗺️</span><span>Trips</span>
+        <span>Trips</span>
       </div>
       <div class="nav-item" data-page="maintenance" id="nav-maintenance">
-        <span class="nav-icon">🔧</span><span>Maintenance</span>
+        <span>Maintenance</span>
       </div>
       <div class="nav-item" data-page="fuel" id="nav-fuel">
-        <span class="nav-icon">⛽</span><span>Fuel &amp; Expenses</span>
+        <span>Fuel &amp; Expenses</span>
       </div>
       <div class="nav-item" data-page="analytics" id="nav-analytics">
-        <span class="nav-icon">📈</span><span>Analytics</span>
+        <span>Analytics</span>
       </div>
       <div class="nav-item" data-page="settings" id="nav-settings">
-        <span class="nav-icon">⚙️</span><span>Settings</span>
+        <span>Settings</span>
       </div>
     </nav>
   </aside>
@@ -124,7 +124,67 @@
             <div id="vStatusBars"></div>
           </div>
         </div>
+
+        <!-- ══ NEW ROW: Cost vs Utilization chart ══ -->
+        <div class="panel" style="margin-top:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div class="panel-title" style="margin-bottom:2px;">Cost vs Fleet Utilization</div>
+              <div style="font-size:12px;color:var(--text-3);">7-day operational cost (bars) against utilization % (line) — spot expensive low-utilization days</div>
+            </div>
+            <div style="display:flex;gap:16px;font-size:11px;color:var(--text-2);">
+              <span><span style="display:inline-block;width:10px;height:3px;background:var(--accent);border-radius:2px;vertical-align:middle;margin-right:5px;"></span>Op. Cost</span>
+              <span><span style="display:inline-block;width:10px;height:3px;background:#3b82f6;border-radius:2px;vertical-align:middle;margin-right:5px;"></span>Utilization %</span>
+            </div>
+          </div>
+          <canvas id="costUtilChart" style="max-height:200px;"></canvas>
+        </div>
+
+        <!-- ══ NEW ROW: Expiring Licenses + Maintenance Due ══ -->
+        <div class="two-col" style="margin-top:18px;">
+
+          <!-- Expiring Licenses widget -->
+          <div class="panel">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div class="panel-title" style="margin-bottom:0;">Expiring Licenses</div>
+              <span id="expLicBadge" style="font-size:10px;padding:2px 10px;border-radius:20px;background:rgba(244,63,94,0.12);color:#f43f5e;font-weight:700;display:none;">Urgent</span>
+            </div>
+            <table class="data-table" id="expLicTable">
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>License No</th>
+                  <th>Expiry Date</th>
+                  <th>Days Left</th>
+                </tr>
+              </thead>
+              <tbody id="expLicTbody"></tbody>
+            </table>
+          </div>
+
+          <!-- Maintenance Due Soon widget -->
+          <div class="panel">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div class="panel-title" style="margin-bottom:0;">Maintenance Due Soon</div>
+              <span id="maintDueBadge" style="font-size:10px;padding:2px 10px;border-radius:20px;background:rgba(249,115,22,0.12);color:#f97316;font-weight:700;display:none;">Action Needed</span>
+            </div>
+            <table class="data-table" id="maintDueTable">
+              <thead>
+                <tr>
+                  <th>Vehicle</th>
+                  <th>Last Service</th>
+                  <th>Next Due</th>
+                  <th>Urgency</th>
+                </tr>
+              </thead>
+              <tbody id="maintDueTbody"></tbody>
+            </table>
+          </div>
+
+        </div>
+
       </section>
+
 
       <!-- ─────────────────────────────────────
            2. FLEET (Vehicle Registry)

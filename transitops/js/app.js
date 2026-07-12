@@ -75,10 +75,15 @@ const Router = {
    DASHBOARD MODULE
    ==================================================== */
 const Dashboard = {
+  _cuChart: null,
+
   render() {
     this.renderKPIs();
     this.renderRecentTrips();
     this.renderStatusBars();
+    this.renderExpiringLicenses();
+    this.renderMaintDue();
+    setTimeout(() => this.renderCostUtil(), 0);
   },
 
   filtered() {
@@ -162,7 +167,201 @@ const Dashboard = {
       </div>`).join('');
   },
 
-  applyFilters() { this.render(); }
+  applyFilters() { this.render(); },
+
+  /* ══ NEW: Cost vs Utilization 7-day chart ══ */
+  renderCostUtil() {
+    const ctx = document.getElementById('costUtilChart');
+    if (!ctx) return;
+    if (this._cuChart) { this._cuChart.destroy(); }
+
+    // Build last 7 days
+    const days = [], labels = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      days.push(d.toISOString().slice(0, 10));       // 'YYYY-MM-DD'
+      labels.push(d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' })); // 'Mon 7'
+    }
+
+    // Operational cost per day (fuel + maintenance recorded on that day)
+    const costByDay = days.map(day => {
+      const f = DB.fuelLogs.filter(l => l.date === day).reduce((s, l) => s + (l.cost || 0), 0);
+      const m = DB.maintenance.filter(r => r.date === day).reduce((s, r) => s + (r.cost || 0), 0);
+      return f + m;
+    });
+
+    // Utilization % = on-trip vehicles / total that day (approximated from dispatched trips)
+    const total = DB.vehicles.length || 1;
+    const utilByDay = days.map(day => {
+      const onTrip = DB.trips.filter(t =>
+        t.date === day && (t.status === 'Dispatched' || t.status === 'Completed')
+      ).length;
+      // Fall back to current utilization if no trip data for that day
+      const active = DB.vehicles.filter(v => v.status === 'On Trip').length;
+      return onTrip > 0 ? Math.min(100, Math.round((onTrip / total) * 100))
+                        : Math.round((active / total) * 100);
+    });
+
+    this._cuChart = new Chart(ctx, {
+      data: {
+        labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Op. Cost (₹)',
+            data: costByDay,
+            backgroundColor: 'rgba(212,147,10,0.25)',
+            borderColor: '#d4930a',
+            borderWidth: 1.5,
+            borderRadius: 4,
+            yAxisID: 'yCost',
+          },
+          {
+            type: 'line',
+            label: 'Utilization %',
+            data: utilByDay,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.08)',
+            borderWidth: 2,
+            pointRadius: 4,
+            pointBackgroundColor: '#3b82f6',
+            fill: true,
+            tension: 0.4,
+            yAxisID: 'yUtil',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.dataset.label === 'Utilization %'
+                ? ` Utilization: ${ctx.parsed.y}%`
+                : ` Cost: ₹${U.fmt(ctx.parsed.y)}`
+            }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7280', font: { size: 11 } } },
+          yCost: {
+            type: 'linear', position: 'left',
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            ticks: { color: '#d4930a', font: { size: 10 }, callback: v => '₹' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) }
+          },
+          yUtil: {
+            type: 'linear', position: 'right',
+            min: 0, max: 100,
+            grid: { display: false },
+            ticks: { color: '#3b82f6', font: { size: 10 }, callback: v => v + '%' }
+          }
+        }
+      }
+    });
+  },
+
+  /* ══ NEW: Expiring Licenses widget ══ */
+  renderExpiringLicenses() {
+    const tbody  = document.getElementById('expLicTbody');
+    const badge  = document.getElementById('expLicBadge');
+    if (!tbody) return;
+
+    const today = new Date();
+    const WARN_DAYS = 60;  // flag licenses expiring within 60 days
+
+    const rows = DB.drivers
+      .filter(d => d.licenseExpiry)
+      .map(d => {
+        const exp  = new Date(d.licenseExpiry);
+        const diff = Math.ceil((exp - today) / 86400000);
+        return { d, exp, diff };
+      })
+      .filter(r => r.diff <= WARN_DAYS)
+      .sort((a, b) => a.diff - b.diff);
+
+    // Show urgent badge if any expiring within 14 days
+    const urgent = rows.some(r => r.diff <= 14);
+    if (badge) badge.style.display = urgent ? 'inline-block' : 'none';
+
+    tbody.innerHTML = rows.length
+      ? rows.map(r => {
+          const isExpired = r.diff < 0;
+          const isUrgent  = r.diff >= 0 && r.diff <= 14;
+          const color     = isExpired ? '#f43f5e' : isUrgent ? '#f97316' : '#fbbf24';
+          const label     = isExpired ? `Expired ${Math.abs(r.diff)}d ago`
+                          : isUrgent  ? `${r.diff} days`
+                          :             `${r.diff} days`;
+          return `<tr>
+            <td class="fw-600">${r.d.name}</td>
+            <td class="mono" style="font-size:11px;">${r.d.licenseNo}</td>
+            <td>${U.fmtDate(r.d.licenseExpiry)}</td>
+            <td>
+              <span style="background:${color}18;color:${color};border:1px solid ${color}33;
+                border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;white-space:nowrap;">
+                ${label}
+              </span>
+            </td>
+          </tr>`;
+        }).join('')
+      : `<tr class="empty-row"><td colspan="4" style="color:var(--green);font-size:12px;">All licenses valid — no expiries within 60 days</td></tr>`;
+  },
+
+  /* ══ NEW: Maintenance Due Soon widget ══ */
+  renderMaintDue() {
+    const tbody = document.getElementById('maintDueTbody');
+    const badge = document.getElementById('maintDueBadge');
+    if (!tbody) return;
+
+    const today = new Date();
+    const WARN_DAYS = 30;
+
+    // Build list from maintenance records that have nextServiceDue
+    const seen = new Set();
+    const rows = DB.maintenance
+      .filter(m => m.nextServiceDue)
+      .filter(m => {
+        if (seen.has(m.vehicleId)) return false; // one per vehicle
+        seen.add(m.vehicleId);
+        return true;
+      })
+      .map(m => {
+        const v    = DB.vehicles.find(v => v.id === m.vehicleId);
+        const due  = new Date(m.nextServiceDue);
+        const diff = Math.ceil((due - today) / 86400000);
+        return { m, v, due, diff };
+      })
+      .filter(r => r.diff <= WARN_DAYS)
+      .sort((a, b) => a.diff - b.diff);
+
+    const urgent = rows.some(r => r.diff <= 7);
+    if (badge) badge.style.display = urgent ? 'inline-block' : 'none';
+
+    tbody.innerHTML = rows.length
+      ? rows.map(r => {
+          const isOverdue = r.diff < 0;
+          const isUrgent  = r.diff >= 0 && r.diff <= 7;
+          const color     = isOverdue ? '#f43f5e' : isUrgent ? '#f97316' : '#fbbf24';
+          const label     = isOverdue ? `Overdue ${Math.abs(r.diff)}d`
+                          : isUrgent  ? `Due in ${r.diff}d`
+                          :             `Due in ${r.diff}d`;
+          return `<tr>
+            <td class="fw-600">${r.v?.name ?? 'Unknown'}</td>
+            <td style="font-size:11px;color:var(--text-2);">${U.fmtDate(r.m.date)}</td>
+            <td style="font-size:11px;">${U.fmtDate(r.m.nextServiceDue)}</td>
+            <td>
+              <span style="background:${color}18;color:${color};border:1px solid ${color}33;
+                border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;white-space:nowrap;">
+                ${label}
+              </span>
+            </td>
+          </tr>`;
+        }).join('')
+      : `<tr class="empty-row"><td colspan="4" style="color:var(--green);font-size:12px;">No upcoming maintenance due within 30 days</td></tr>`;
+  },
 };
 
 /* ====================================================
