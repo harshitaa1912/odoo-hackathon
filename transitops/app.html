@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TransitOps – Operations Platform</title>
+  <meta name="description" content="TransitOps – Smart Transport Operations: fleet, dispatch, maintenance, analytics.">
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Chart.js for analytics charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">TransitOps</div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-page="dashboard" id="nav-dashboard">
+        <span class="nav-icon">📊</span><span>Dashboard</span>
+      </div>
+      <div class="nav-item" data-page="fleet" id="nav-fleet">
+        <span class="nav-icon">🚛</span><span>Fleet</span>
+      </div>
+      <div class="nav-item" data-page="drivers" id="nav-drivers">
+        <span class="nav-icon">👤</span><span>Drivers</span>
+      </div>
+      <div class="nav-item" data-page="trips" id="nav-trips">
+        <span class="nav-icon">🗺️</span><span>Trips</span>
+      </div>
+      <div class="nav-item" data-page="maintenance" id="nav-maintenance">
+        <span class="nav-icon">🔧</span><span>Maintenance</span>
+      </div>
+      <div class="nav-item" data-page="fuel" id="nav-fuel">
+        <span class="nav-icon">⛽</span><span>Fuel &amp; Expenses</span>
+      </div>
+      <div class="nav-item" data-page="analytics" id="nav-analytics">
+        <span class="nav-icon">📈</span><span>Analytics</span>
+      </div>
+      <div class="nav-item" data-page="settings" id="nav-settings">
+        <span class="nav-icon">⚙️</span><span>Settings</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <div class="main">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <input type="text" class="topbar-search" id="gSearch" placeholder="Search…" autocomplete="off">
+      <div class="topbar-right">
+        <span class="topbar-user" id="topbarUser">Raven K.</span>
+        <div class="role-badge" id="roleBadge" title="Click to sign out">
+          <span id="roleBadgeText">Dispatcher</span>
+          <div class="badge-initials" id="roleInitials">RK</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══ PAGE CONTENT ═══ -->
+    <div class="page-wrap">
+
+      <!-- ─────────────────────────────────────
+           1. DASHBOARD
+           ───────────────────────────────────── -->
+      <section class="page-section active" id="pg-dashboard">
+
+        <!-- Filters -->
+        <div class="filter-bar mb-12" style="align-items:flex-end;">
+          <div class="filter-group">
+            <span class="filter-label">Filters</span>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Vehicle Type</span>
+            <select class="filter-select" id="df-type">
+              <option value="">All</option>
+              <option value="Van">Van</option>
+              <option value="Truck">Truck</option>
+              <option value="Mini">Mini</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Status</span>
+            <select class="filter-select" id="df-status">
+              <option value="">All</option>
+              <option value="Available">Available</option>
+              <option value="On Trip">On Trip</option>
+              <option value="In Shop">In Shop</option>
+              <option value="Retired">Retired</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Region</span>
+            <select class="filter-select" id="df-region">
+              <option value="">All</option>
+              <option value="Ahmedabad">Ahmedabad</option>
+              <option value="Surat">Surat</option>
+              <option value="Vadodara">Vadodara</option>
+              <option value="Gandhinagar">Gandhinagar</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <!-- Recent Trips + Status Bars -->
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-title">Recent Trips</div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Trip</th><th>Vehicle</th><th>Driver</th><th>Status</th><th>ETA</th>
+                </tr>
+              </thead>
+              <tbody id="dashTripsTbody"></tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Vehicle Status</div>
+            <div id="vStatusBars"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────────────────────────
+           2. FLEET (Vehicle Registry)
+           ───────────────────────────────────── -->
+      <section class="page-section" id="pg-fleet">
+        <div class="sec-header">
+          <div class="filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">Type:</span>
+              <select class="filter-select" id="ff-type">
+                <option value="">All</option>
+                <option value="Van">Van</option>
+                <option value="Truck">Truck</option>
+                <option value="Mini">Mini</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">Status:</span>
+              <select class="filter-select" id="ff-status">
+                <option value="">All</option>
+                <option value="Available">Available</option>
+                <option value="On Trip">On Trip</option>
+                <option value="In Shop">In Shop</option>
+                <option value="Retired">Retired</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">Search:</span>
+              <input type="text" class="filter-input" id="ff-search" placeholder="Search reg. no…">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="Fleet.openAdd()">+ Add Vehicle</button>
+        </div>
+
+        <div class="panel">
+          <table class="data-table" id="fleetTable">
+            <thead>
+              <tr>
+                <th>Reg. No. (Unique)</th>
+                <th>Name / Model</th>
+                <th>Type</th>
+                <th>Capacity</th>
+                <th>Odometer</th>
+                <th>Acq. Cost</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fleetTbody"></tbody>
+          </table>
+          <p class="rule-note" style="margin-top:14px;">
+            Rule: Registration No. must be unique · Retired/In Shop vehicles are hidden from Trip Dispatcher
+          </p>
+        </div>
+      </section>
+
+      <!-- ─────────────────────────────────────
+           3. DRIVERS & SAFETY PROFILES
+           ───────────────────────────────────── -->
+      <section class="page-section" id="pg-drivers">
+        <div class="sec-header">
+          <div></div>
+          <button class="btn btn-primary" onclick="Drivers.openAdd()">+ Add Driver</button>
+        </div>
+
+        <div class="panel">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Driver</th>
+                <th>License No</th>
+                <th>Category</th>
+                <th>Expiry</th>
+                <th>Contact</th>
+                <th>Trip Compl.</th>
+                <th>Safety</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="driversTbody"></tbody>
+          </table>
+
+          <div style="margin-top:20px;">
+            <div class="panel-title" style="margin-bottom:8px;">Toggle Status</div>
+            <div class="toggle-group" id="toggleGroup">
+              <span class="text-muted" style="font-size:12px;">Click a driver row to change their status</span>
+            </div>
+          </div>
+
+          <p class="rule-note">
+            Rule: Expired license or Suspended status → blocked from trip assignment
+          </p>
+        </div>
+      </section>
+
+      <!-- ─────────────────────────────────────
+           4. TRIP DISPATCHER
+           ───────────────────────────────────── -->
+      <section class="page-section" id="pg-trips">
+
+        <!-- Lifecycle stepper -->
+        <div class="lifecycle" id="tripLifecycle"></div>
+
+        <div class="two-col">
+          <!-- LEFT: Create Trip form -->
+          <div class="panel">
+            <div class="panel-title">Create Trip</div>
+
+            <div class="form-group">
+              <label class="form-label" for="t-source">Source</label>
+              <input type="text" class="form-input" id="t-source" placeholder="Gandhinagar Depot">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="t-dest">Destination</label>
+              <input type="text" class="form-input" id="t-dest" placeholder="Ahmedabad Hub">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="t-vehicle">Vehicle (Available Only)</label>
+              <select class="form-select" id="t-vehicle">
+                <option value="">Select vehicle…</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="t-driver">Driver (Available Only)</label>
+              <select class="form-select" id="t-driver">
+                <option value="">Select driver…</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="t-cargo">Cargo Weight (KG)</label>
+              <input type="number" class="form-input" id="t-cargo" placeholder="e.g. 450" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="t-dist">Planned Distance (KM)</label>
+              <input type="number" class="form-input" id="t-dist" placeholder="e.g. 35" min="0">
+            </div>
+
+            <!-- Validation error box -->
+            <div class="val-box" id="valBox"></div>
+
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-secondary" style="flex:1;" id="dispatchBtn" onclick="Trips.dispatch()">
+                Dispatch
+              </button>
+              <button class="btn btn-danger" style="flex:1;" onclick="Trips.resetForm()">Cancel</button>
+            </div>
+          </div>
+
+          <!-- RIGHT: Live board -->
+          <div>
+            <div class="panel-title" style="margin-bottom:14px;">Live Board</div>
+            <div id="liveBoard"></div>
+            <p class="text-muted" style="font-size:11px;margin-top:12px;font-style:italic;">
+              On Complete: odometer → Fuel log → expenses → Vehicle &amp; Driver Available
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────────────────────────
+           5. MAINTENANCE
+           ───────────────────────────────────── -->
+      <section class="page-section" id="pg-maintenance">
+        <div class="two-col">
+
+          <!-- LEFT: Log form -->
+          <div class="panel">
+            <div class="panel-title">Log Service Record</div>
+            <form id="maintForm" onsubmit="event.preventDefault(); Maint.save();">
+              <div class="form-group">
+                <label class="form-label" for="m-vehicle">Vehicle</label>
+                <select class="form-select" id="m-vehicle" required>
+                  <option value="">Select vehicle…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="m-service">Service Type</label>
+                <input type="text" class="form-input" id="m-service" placeholder="Oil Change" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="m-cost">Cost (₹)</label>
+                <input type="number" class="form-input" id="m-cost" placeholder="2500" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="m-date">Date</label>
+                <input type="date" class="form-input" id="m-date" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="m-status">Status</label>
+                <select class="form-select" id="m-status">
+                  <option value="Active">Active</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">Save</button>
+            </form>
+
+            <!-- Transition flow arrows -->
+            <div class="trans-flow">
+              <div class="trans-row">
+                <span class="trans-from">Available</span>
+                <span class="trans-arrow">──(adding active record)──→</span>
+                <span class="trans-to-shop">In Shop</span>
+              </div>
+              <div class="trans-row">
+                <span class="trans-to-shop">In Shop</span>
+                <span class="trans-arrow">──(closing record)──→</span>
+                <span class="trans-from">Available</span>
+              </div>
+            </div>
+            <p class="rule-note">Note: In Shop vehicles are removed from the dispatch pool.</p>
+          </div>
+
+          <!-- RIGHT: Service log table -->
+          <div class="panel">
+            <div class="panel-title">Service Log</div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Vehicle</th><th>Service</th><th>Cost</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="maintTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────────────────────────
+           6. FUEL & EXPENSE MANAGEMENT
+           ───────────────────────────────────── -->
+      <section class="page-section" id="pg-fuel">
+
+        <!-- Fuel Logs header -->
+        <div class="sec-header mb-12">
+          <div class="panel-title" style="margin-bottom:0;">Fuel Logs</div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" onclick="Fuel.openFuelModal()">+ Log Fuel</button>
+            <button class="btn btn-primary" onclick="Fuel.openExpModal()">+ Add Expense</button>
+          </div>
+        </div>
+
+        <!-- Fuel logs table -->
+        <div class="panel mb-18">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Vehicle</th><th>Date</th><th>Liters</th><th>Fuel Cost</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fuelTbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Other expenses -->
+        <div class="panel-title mb-12">Other Expenses (Toll / Misc)</div>
+        <div class="panel">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Trip</th><th>Vehicle</th><th>Toll</th><th>Other</th>
+                <th>Maint. (Linked)</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="expTbody"></tbody>
+          </table>
+
+          <div class="total-bar">
+            <span>Total Operational Cost (Auto) = Fuel + Maint</span>
+            <span class="total-val" id="totalOpCost">₹0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────────────────────────
+           7. REPORTS & ANALYTICS
+           ───────────────────────────────────── -->
+      <section class="page-section" id="pg-analytics">
+        <div class="an-grid" id="anKpiGrid"></div>
+
+        <p class="roi-formula">
+          ROI = (Revenue − (Maintenance + Fuel)) / Acquisition Cost
+        </p>
+
+        <div class="charts-row">
+          <div class="chart-panel">
+            <div class="chart-title">Monthly Revenue</div>
+            <canvas id="revChart"></canvas>
+          </div>
+          <div class="chart-panel">
+            <div class="chart-title">Top Costliest Vehicles</div>
+            <canvas id="costChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────────────────────────
+           8. SETTINGS & RBAC
+           ───────────────────────────────────── -->
+      <section class="page-section" id="pg-settings">
+        <div class="settings-grid">
+
+          <!-- LEFT: General settings -->
+          <div class="panel">
+            <div class="panel-title">General</div>
+            <div class="form-group">
+              <label class="form-label" for="s-depot">Depot Name</label>
+              <input type="text" class="form-input" id="s-depot" placeholder="Gandhinagar Depot, GJ4">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="s-currency">Currency</label>
+              <input type="text" class="form-input" id="s-currency" placeholder="INR (Rs)">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="s-dist">Distance Unit</label>
+              <input type="text" class="form-input" id="s-dist" placeholder="Kilometers">
+            </div>
+            <button class="btn btn-primary" onclick="Settings.save()">Save Changes</button>
+          </div>
+
+          <!-- RIGHT: RBAC table -->
+          <div class="panel">
+            <div class="panel-title">Role-Based Access (RBAC)</div>
+            <table class="rbac-table">
+              <thead>
+                <tr>
+                  <th>Role</th><th>Fleet</th><th>Drivers</th><th>Trips</th><th>Fuel/Exp.</th><th>Analytics</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Fleet Manager</td>
+                  <td class="rbac-check">✓</td>
+                  <td class="rbac-check">✓</td>
+                  <td class="rbac-deny">–</td>
+                  <td class="rbac-deny">–</td>
+                  <td class="rbac-check">✓</td>
+                </tr>
+                <tr>
+                  <td>Dispatcher</td>
+                  <td class="rbac-view">View</td>
+                  <td class="rbac-deny">–</td>
+                  <td class="rbac-check">✓</td>
+                  <td class="rbac-deny">–</td>
+                  <td class="rbac-deny">–</td>
+                </tr>
+                <tr>
+                  <td>Safety Officer</td>
+                  <td class="rbac-deny">–</td>
+                  <td class="rbac-check">✓</td>
+                  <td class="rbac-view">View</td>
+                  <td class="rbac-deny">–</td>
+                  <td class="rbac-deny">–</td>
+                </tr>
+                <tr>
+                  <td>Financial Analyst</td>
+                  <td class="rbac-view">View</td>
+                  <td class="rbac-deny">–</td>
+                  <td class="rbac-deny">–</td>
+                  <td class="rbac-check">✓</td>
+                  <td class="rbac-check">✓</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /page-wrap -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══════════════════ MODALS ═══════════════════ -->
+
+<!-- Add / Edit Vehicle -->
+<div class="modal-overlay" id="vehicleModal">
+  <div class="modal">
+    <div class="modal-title" id="vm-title">Add Vehicle</div>
+    <form id="vehicleForm" onsubmit="event.preventDefault();">
+      <div class="form-group">
+        <label class="form-label">Registration Number (Unique) *</label>
+        <input type="text" class="form-input" id="v-regNo" placeholder="e.g. GJ01AB4521" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vehicle Name / Model *</label>
+        <input type="text" class="form-input" id="v-name" placeholder="e.g. VAN-05" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="v-type">
+          <option value="Van">Van</option>
+          <option value="Truck">Truck</option>
+          <option value="Mini">Mini</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Max Load Capacity (KG) *</label>
+        <input type="number" class="form-input" id="v-capacity" placeholder="e.g. 500" min="1" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Odometer (KM)</label>
+        <input type="number" class="form-input" id="v-odometer" placeholder="e.g. 74000" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Acquisition Cost (₹)</label>
+        <input type="number" class="form-input" id="v-cost" placeholder="e.g. 620000" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="v-status">
+          <option value="Available">Available</option>
+          <option value="In Shop">In Shop</option>
+          <option value="Retired">Retired</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Region</label>
+        <input type="text" class="form-input" id="v-region" placeholder="e.g. Ahmedabad">
+      </div>
+    </form>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Fleet.closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="Fleet.save()">Save Vehicle</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Driver -->
+<div class="modal-overlay" id="driverModal">
+  <div class="modal">
+    <div class="modal-title" id="dm-title">Add Driver</div>
+    <form id="driverForm" onsubmit="event.preventDefault();">
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input type="text" class="form-input" id="d-name" placeholder="e.g. Alex Kumar" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">License Number *</label>
+        <input type="text" class="form-input" id="d-license" placeholder="e.g. DL-88213" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">License Category</label>
+        <select class="form-select" id="d-cat">
+          <option value="LMV">LMV (Light Motor Vehicle)</option>
+          <option value="HMV">HMV (Heavy Motor Vehicle)</option>
+          <option value="MCWG">MCWG (Motorcycle)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">License Expiry Date *</label>
+        <input type="date" class="form-input" id="d-expiry" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Number *</label>
+        <input type="text" class="form-input" id="d-contact" placeholder="e.g. 98765XXXXX" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Safety Score (0–100)</label>
+        <input type="number" class="form-input" id="d-safety" placeholder="e.g. 96" min="0" max="100">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="d-dstatus">
+          <option value="Available">Available</option>
+          <option value="Off Duty">Off Duty</option>
+          <option value="Suspended">Suspended</option>
+        </select>
+      </div>
+    </form>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Drivers.closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="Drivers.save()">Save Driver</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log Fuel -->
+<div class="modal-overlay" id="fuelModal">
+  <div class="modal">
+    <div class="modal-title">Log Fuel</div>
+    <div class="form-group">
+      <label class="form-label">Vehicle</label>
+      <select class="form-select" id="fl-vehicle">
+        <option value="">Select vehicle…</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-input" id="fl-date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Liters</label>
+      <input type="number" class="form-input" id="fl-liters" placeholder="e.g. 42" min="0.1" step="0.1">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cost (₹)</label>
+      <input type="number" class="form-input" id="fl-cost" placeholder="e.g. 3150" min="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Fuel.closeFuelModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="Fuel.saveFuel()">Save Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Expense -->
+<div class="modal-overlay" id="expModal">
+  <div class="modal">
+    <div class="modal-title">Add Expense</div>
+    <div class="form-group">
+      <label class="form-label">Trip (optional)</label>
+      <select class="form-select" id="ex-trip">
+        <option value="">Select trip…</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Vehicle *</label>
+      <select class="form-select" id="ex-vehicle">
+        <option value="">Select vehicle…</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Toll (₹)</label>
+      <input type="number" class="form-input" id="ex-toll" placeholder="0" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Other (₹)</label>
+      <input type="number" class="form-input" id="ex-other" placeholder="0" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Maintenance Linked (₹)</label>
+      <input type="number" class="form-input" id="ex-maint" placeholder="0" min="0">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Fuel.closeExpModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="Fuel.saveExp()">Save Expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trip Action (Complete) -->
+<div class="modal-overlay" id="actionModal">
+  <div class="modal">
+    <div class="modal-title" id="am-title">Complete Trip</div>
+    <div id="am-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Trips.closeAction()">Cancel</button>
+      <button class="btn btn-success" id="am-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/data.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

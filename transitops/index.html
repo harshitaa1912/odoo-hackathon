@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TransitOps – Sign In</title>
+  <meta name="description" content="TransitOps Smart Transport Operations Platform – sign in to manage your fleet.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="login-page">
+
+  <!-- ======= LEFT PANEL ======= -->
+  <div class="login-left">
+    <div>
+      <!-- Amber grid logo -->
+      <div class="login-logo">
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+      </div>
+      <h1>TransitOps</h1>
+      <p class="tagline">Smart Transport Operations Platform</p>
+    </div>
+
+    <div style="margin-top:44px;">
+      <p class="roles-title">One login, four roles:</p>
+      <ul class="roles-list">
+        <li>Fleet Manager</li>
+        <li>Dispatcher</li>
+        <li>Safety Officer</li>
+        <li>Financial Analyst</li>
+      </ul>
+    </div>
+
+    <div class="login-left-footer">
+      TRANSITOPS © 2026 · RBAC Enabled
+    </div>
+  </div>
+
+  <!-- ======= RIGHT PANEL ======= -->
+  <div class="login-right">
+
+    <!-- Error popup (top-right) -->
+    <div class="error-popup" id="errorPopup">
+      <div class="ep-title">✗ Error state</div>
+      <div id="errorMsg">Invalid credentials. Account locked after 5 failed attempts.</div>
+    </div>
+
+    <h2>Sign in to your account</h2>
+    <p class="sub">Enter your credentials to continue</p>
+
+    <form id="loginForm" style="max-width:340px;" novalidate>
+
+      <div class="form-group">
+        <label class="form-label" for="emailInput">Email</label>
+        <input type="email" class="form-input" id="emailInput"
+               placeholder="Raven.k@transitops.in" autocomplete="email" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="passwordInput">Password</label>
+        <input type="password" class="form-input" id="passwordInput"
+               placeholder="••••••••" autocomplete="current-password" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="roleSelect">Role (RBAC)</label>
+        <select class="form-select" id="roleSelect" required>
+          <option value="">Select your role…</option>
+          <option value="Fleet Manager">Fleet Manager</option>
+          <option value="Dispatcher">Dispatcher</option>
+          <option value="Safety Officer">Safety Officer</option>
+          <option value="Financial Analyst">Financial Analyst</option>
+        </select>
+      </div>
+
+      <div class="login-form-row">
+        <label class="checkbox-label">
+          <input type="checkbox" id="rememberMe"> Remember me
+        </label>
+        <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn-login" id="signInBtn">Sign In</button>
+
+      <div class="role-map">
+        <p>Access is scoped by role after login:</p>
+        • Fleet Manager → Fleet, Maintenance<br>
+        • Dispatcher → Dashboard, Trips<br>
+        • Safety Officer → Drivers, Compliance<br>
+        • Financial Analyst → Fuel &amp; Expenses, Analytics
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>
