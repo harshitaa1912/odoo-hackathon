@@ -29,7 +29,7 @@ function hideError() {
 [emailInput, passwordInput].forEach(el => el.addEventListener('input', hideError));
 
 /* Form submit */
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const email    = emailInput.value.trim();
@@ -44,17 +44,26 @@ loginForm.addEventListener('submit', (e) => {
     showError('Please enter a valid email address.'); return;
   }
 
-  const result = Auth.login(email, password, role);
+  /* Show loading state */
+  signInBtn.textContent = 'Signing in…';
+  signInBtn.disabled = true;
+  hideError();
 
-  if (result.ok) {
-    signInBtn.textContent = 'Signing in…';
-    signInBtn.disabled = true;
-    hideError();
-    setTimeout(() => { window.location.href = 'app.html'; }, 400);
-  } else {
-    showError(result.msg);
-    passwordInput.value = '';
-    passwordInput.focus();
+  try {
+    const result = await Auth.login(email, password, role);
+    if (result.ok) {
+      setTimeout(() => { window.location.href = 'app.html'; }, 300);
+    } else {
+      showError(result.msg);
+      passwordInput.value = '';
+      passwordInput.focus();
+      signInBtn.textContent = 'Sign In';
+      signInBtn.disabled = false;
+    }
+  } catch (err) {
+    showError('Unexpected error. Please try again.');
+    signInBtn.textContent = 'Sign In';
+    signInBtn.disabled = false;
   }
 });
 
